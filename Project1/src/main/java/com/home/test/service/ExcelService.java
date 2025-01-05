@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -37,7 +38,7 @@ public class ExcelService {
 			
 			XSSFSheet sheet = workbook.getSheet(sheets);
 			if (sheet == null) {
-				sheet = workbook.createSheet();
+				sheet = workbook.createSheet(sheets);
 			}
 			
 			Map<String, Object> mapHead = new HashMap<String, Object>();
@@ -52,16 +53,49 @@ public class ExcelService {
 			}
 			int rowNum = 0;
 			int cellNum = 0;
-			XSSFRow row = sheet.getRow(rowNum);
-			if (row == null) {
-				row = sheet.createRow(rowNum);
+			for (Object heads : listHead) {
+				
+				XSSFRow row = sheet.getRow(rowNum);
+				if (row == null) {
+					System.out.println("row »ý¼º");
+					row = sheet.createRow(0);
+					row = sheet.createRow(1);
+				}
+				
+				if (heads instanceof String) {
+
+					sheet.addMergedRegion(new CellRangeAddress(0, 1, cellNum, cellNum));
+					
+					System.out.println("row : " + row);
+					
+					XSSFCell cell = row.createCell(cellNum);
+					System.out.println("cell : " + cell);
+					cell.setCellValue((String)heads);
+					System.out.println("cell : " + cell);
+					
+					cellNum ++;
+				} else if (heads instanceof List) {
+					sheet.addMergedRegion(new CellRangeAddress(0, 0, cellNum, cellNum + ((List<String>)heads).size()));
+					row = sheet.getRow(0);
+					
+					for (String list : (List<String>) heads) {
+						cellNum = 0;
+						row = sheet.getRow(1);
+						
+						for (String datas : list) {
+							XSSFCell cell = row.createCell(cellNum);
+							cell.setCellValue(datas);
+							cellNum++;
+						}
+						rowNum++;
+					}
+					
+					
+					
+					
+				}
 			}
-			for (String heads : listHead) {
-				XSSFCell cell = row.createCell(cellNum);
-				cell.setCellValue(heads);
-				cellNum ++;
-			}
-			rowNum++;
+			rowNum = 2;
 
 			
 			Map<String, Object> mapData = new HashMap<String, Object>();
@@ -79,7 +113,7 @@ public class ExcelService {
 			
 			for (List<String> list : listData) {
 				cellNum = 0;
-				row = sheet.createRow(rowNum);
+				XSSFRow row = sheet.createRow(rowNum);
 				
 				for (String datas : list) {
 					XSSFCell cell = row.createCell(cellNum);
@@ -88,12 +122,7 @@ public class ExcelService {
 				}
 				rowNum++;
 			}
-			
-			
-			
 		}
-		
-		
 		
 		HttpHeaders headers = new HttpHeaders();
 		res.setHeader("Content-Disposition", "attachment; filename=test.xlsx");
@@ -121,7 +150,12 @@ public class ExcelService {
 		sheet.add("testsheet1");
 		sheet.add("testsheet2");
 		
-		head.put("testsheet1", Arrays.asList("id", "pw", "name", "age", "address"));
+		head.put("testsheet1", Arrays.asList(
+				"id", 
+				Arrays.asList("pw1", "pw2", "pw3"),
+				"name", 
+				"age", 
+				"address"));
 		head.put("testsheet2", Arrays.asList("num", "num2", "num3", "nu4", "num5"));
 		
 		data.put("testsheet1", Arrays.asList(
